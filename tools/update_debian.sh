@@ -34,6 +34,7 @@ for debianver in stretch buster bullseye; do
     echo $packages_sorted | sed 's:linux-image-::g' | sed 's:-dbgsym.*::g' | sed 's:unsigned-::g' | sort > packages_version
     gsutil ls gs://btfhub/debian/${debian_number}/x86_64/ | sed "s,gs://btfhub/debian/${debian_number}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort > gs_names
     new_packages=$(comm -23 packages_version gs_names)
+    rm -f packages ${debianver} ${debianver}-updates gs_names packages_version
     for package in $new_packages; do
 	    filepath=$(grep -A1 "${package}" packages | grep -v "^Package: " | sed 's:Filename\: ::g')
 	    url="${repository}/${filepath}"
@@ -87,7 +88,7 @@ for debianver in stretch buster bullseye; do
 
     done
 
-    rm -f packages
+
 done
 
 exit 0

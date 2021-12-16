@@ -30,6 +30,7 @@ for ubuntuver in bionic focal; do
     echo $packages_sorted | sed 's:linux-image-::g' | sed 's:-dbgsym.*::g' | sed 's:unsigned-::g' | sort > packages_version
     gsutil ls gs://btfhub/ubuntu/${ubuntu_number}/x86_64/ | sed "s,gs://btfhub/ubuntu/${ubuntu_number}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort > gs_names
     new_packages=$(comm -23 packages_version gs_names)
+    rm -f packages ${ubuntuver} ${ubuntuver}-updates gs_names packages_version
     for package in $new_packages; do
 	    filepath=$(grep -A1 "${package}" packages | grep -v "^Package: " | sed 's:Filename\: ::g')
 	    url="${repository}/${filepath}"
@@ -86,8 +87,6 @@ for ubuntuver in bionic focal; do
 	    rm "${version}.btf.tar.xz"
 
     done
-
-    rm -f packages
 done
 
 exit 0
