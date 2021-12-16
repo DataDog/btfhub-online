@@ -2,6 +2,6 @@
 
 IMAGE_NAME=${IMAGE_NAME:-"us.gcr.io/seekret/btfhub"}
 
-gcloud run deploy btfhub --image "$IMAGE_NAME" --region us-east1 --no-allow-unauthenticated --min-instances=1 \
+gcloud run deploy btfhub --image "$IMAGE_NAME" --region us-east1 --allow-unauthenticated --min-instances=1 \
   --max-instances=5 --service-account=$SERVICE_ACCOUNT --format=json --project $PROJECT_ID \
   --set-env-vars="ARCHIVE_DIR=/archive,TOOLS_DIR=/app/tools" --memory 2Gi
