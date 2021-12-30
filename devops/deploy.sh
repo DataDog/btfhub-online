@@ -8,6 +8,6 @@ gcloud run deploy btfhub --image "$IMAGE_NAME" --region us-east1 --allow-unauthe
 
 gcloud scheduler jobs create http update-btfhub --schedule "0 12 1 * *" \
    --http-method=POST \
-   --uri=https://btfhub.seekret.com \
+   --uri=https://btfhub.seekret.com/update \
    --oidc-service-account-email=$SERVICE_ACCOUNT   \
    --oidc-token-audience=https://btfhub.seekret.com
