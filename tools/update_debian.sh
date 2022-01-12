@@ -19,75 +19,84 @@ for debianver in stretch buster bullseye; do
         ;;
     esac
 
+    gs_names=$(gsutil ls gs://btfhub/debian/${debian_number}/x86_64/ | sed "s,gs://btfhub/debian/${debian_number}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort)
+
     wget ${repository}/dists/${debianver}/main/binary-amd64/Packages.gz -O ${debianver}.gz
-    wget ${repository}/dists/${debianver}-updates/main/binary-amd64/Packages.gz -O ${debianver}-updates.gz
+    if [ ${debian_number} -lt 11 ]; then
+        wget ${repository}/dists/${debianver}-updates/main/binary-amd64/Packages.gz -O ${debianver}-updates.gz
+    fi
 
     [ ! -f ${debianver}.gz ] && exiterr "no ${debianver}.gz packages file found"
-    [ ! -f ${debianver}-updates.gz ] && exiterr "no ${debianver}-updates.gz packages file found"
+    if [ ${debian_number} -lt 11 ]; then
+        [ ! -f ${debianver}-updates.gz ] && exiterr "no ${debianver}-updates.gz packages file found"
+    fi
 
     gzip -d ${debianver}.gz
     grep -E '^(Package|Filename):' ${debianver} | grep --no-group-separator -A1 -E "^Package: ${regex}" > packages
-    gzip -d ${debianver}-updates.gz
-    grep -E '^(Package|Filename):' ${debianver}-updates | grep --no-group-separator -A1 -E "Package: ${regex}" >> packages
+    if [ ${debian_number} -lt 11 ]; then
+        gzip -d ${debianver}-updates.gz
+        grep -E '^(Package|Filename):' ${debianver}-updates | grep --no-group-separator -A1 -E "Package: ${regex}" >> packages
+    fi
+    rm -f ${debianver} ${debianver}-updates
 
-    grep "Package:" packages | sed 's:Package\: ::g'  | sed 's:linux-image-::g' | sed 's:-dbg.*::g' | sed 's:unsigned-::g' | sort > packages_version
-    gsutil ls gs://btfhub/debian/${debian_number}/x86_64/ | sed "s,gs://btfhub/debian/${debian_number}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort > gs_names
-    new_packages=$(comm -23 packages_version gs_names)
-    rm -f ${debianver} ${debianver}-updates gs_names packages_version
-    for package in $new_packages; do
-	    filepath=$(grep -A1 "${package}" packages | grep -v "^Package: " | sed 's:Filename\: ::g')
-	    url="${repository}/${filepath}"
-	    filename=$(basename "${filepath}")
-	    version=$(echo "${filename}" | sed 's:linux-image-::g' | sed 's:-dbg.*::g' | sed 's:unsigned-::g')
+    grep "Package:" packages | sed 's:Package\: ::g' | sort | while read -r package; do
 
-	    echo URL: "${url}"
-	    echo FILEPATH: "${filepath}"
-	    echo FILENAME: "${filename}"
-	    echo VERSION: "${version}"
+        filepath=$(grep -A1 "${package}" packages | grep -v "^Package: " | sed 's:Filename\: ::g')
+        url="${repository}/${filepath}"
+        filename=$(basename "${filepath}")
+        version=$(echo "${filename}" | sed 's:linux-image-::g' | sed 's:-dbg.*::g' | sed 's:unsigned-::g')
 
-	    if [ ! -f "${version}.ddeb" ]; then
-	    	curl -4 "${url}" -o ${version}.ddeb
-	    	if [ ! -f "${version}.ddeb" ]
-	    	then
-	    		echo "WARN: ${version}.ddeb could not be downloaded"
-	    		continue
-	    	fi
-	    fi
+        if [[ "${gs_names[*]}" =~ ${version} ]]; then
+            echo "INFO: file ${version}.btf already exists"
+            continue
+        fi
 
-	    dpkg --fsys-tarfile "${version}.ddeb" | tar xvf - "./usr/lib/debug/boot/vmlinux-${version}" || \
-	    {
-	        echo "WARN: could not deal with ${version}, cleaning and moving on..."
-	        rm -rf "${version}.ddeb"
-		      touch "${version}.failed"
-          gsutil cp ./${version}.failed gs://btfhub/debian/${debian_number}/x86_64/${version}.failed
-          rm "${version}.failed"
-	        continue
-	    }
+        echo URL: "${url}"
+        echo FILEPATH: "${filepath}"
+        echo FILENAME: "${filename}"
+        echo VERSION: "${version}"
 
-	    mv "./usr/lib/debug/boot/vmlinux-${version}" "./${version}.vmlinux" || \
-	    {
-	        echo "WARN: could not rename vmlinux ${version}, cleaning and moving on..."
-	        rm -rf "${version}.ddeb"
-		      touch "${version}.failed"
-          gsutil cp ./${version}.failed gs://btfhub/debian/${debian_number}/x86_64/${version}.failed
-          rm "${version}.failed"
-	        continue
-      }
+        axel -4 -n 16 "${url}" -o ${version}.ddeb
+        if [ ! -f "${version}.ddeb" ]; then
+            echo "WARN: ${version}.ddeb could not be downloaded"
+            continue
+        fi
 
-	    rm -rf "./usr/lib/debug/boot"
+        # extract vmlinux file from ddeb package
+        dpkg --fsys-tarfile "${version}.ddeb" | tar xvf - "./usr/lib/debug/boot/vmlinux-${version}" || \
+        {
+            echo "WARN: could not deal with ${version}, cleaning and moving on..."
+            rm -rf "./usr"
+            rm -rf "${version}.ddeb"
+            gsutil cp ./${version}.failed gs://btfhub/debian/${debian_number}/x86_64/${version}.failed
+            continue
+        }
 
-	    pahole --btf_encode_detached "${version}.btf" "${version}.vmlinux"
-	    tar cvfJ "./${version}.btf.tar.xz" "${version}.btf"
+        mv "./usr/lib/debug/boot/vmlinux-${version}" "./${version}.vmlinux" || \
+        {
+            echo "WARN: could not rename vmlinux ${version}, cleaning and moving on..."
+            rm -rf "./usr"
+            rm -rf "${version}.ddeb"
+            gsutil cp ./${version}.failed gs://btfhub/debian/${debian_number}/x86_64/${version}.failed
+            continue
 
-      rm "${version}.ddeb"
-	    rm "${version}.btf"
-	    rm "${version}.vmlinux"
-      gsutil cp ./${version}.btf.tar.xz gs://btfhub/debian/${debian_number}/x86_64/${version}.btf.tar.xz
-      rm "${version}.btf.tar.xz"
+        }
 
+        rm -rf "./usr/lib/debug/boot"
+
+        pahole --btf_encode_detached "${version}.btf" "${version}.vmlinux"
+        tar cvfJ "./${version}.btf.tar.xz" "${version}.btf"
+        gsutil cp ./${version}.btf.tar.xz gs://btfhub/debian/${debian_number}/x86_64/${version}.btf.tar.xz
+
+        rm "${version}.ddeb"
+        rm "${version}.btf"
+        rm "${version}.vmlinux"
+        rm "${version}.btf.tar.xz"
     done
 
-    rm -rf packages
+    rm -f packages
 done
+
+echo "Done"
 
 exit 0

@@ -1,2 +1,8 @@
-.idea/
-archive/
+**/*
+
+!cmd/
+!internal/
+!tools/
+!Makefile
+!go.mod
+!go.sum

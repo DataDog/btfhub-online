@@ -5,10 +5,9 @@ RUN apt update && \
         gcc       \
         libc-dev
 
-
 COPY go.mod /code/go.mod
-COPY cmd/main.go /code/main.go
-COPY tools/ /code/tools
+COPY cmd/btfserver/main.go /code/main.go
+COPY internal /code/internal
 WORKDIR /code
 RUN go get -v -d -t ./...
 RUN go build -a -mod=mod -ldflags '-extldflags "-static" -w' -o server ./main.go
@@ -16,7 +15,7 @@ RUN go build -a -mod=mod -ldflags '-extldflags "-static" -w' -o server ./main.go
 FROM debian:bullseye-slim
 
 RUN apt update &&    \
-    apt install -y bash sqlite3 axel rpm git gcc cmake libdw-dev apt-transport-https ca-certificates gnupg curl xz-utils
+    apt install -y bash git gcc cmake libdw-dev apt-transport-https ca-certificates gnupg curl xz-utils
 
 RUN git clone https://github.com/acmel/dwarves && \
     cd dwarves && \
@@ -34,7 +33,9 @@ ENV PATH="/app:${PATH}"
 ENV GIN_MODE=release
 
 COPY --from=builder /code/server /app/
-COPY --from=builder /code/tools/ /app/tools
+COPY tools/ /app/tools
+
+ENV TOOLS_DIR=/app/tools
 
 WORKDIR /app
 CMD ./server
