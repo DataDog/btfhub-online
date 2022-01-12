@@ -47,7 +47,7 @@ for ubuntuver in bionic focal; do
 
 
 	    if [ ! -f "${version}.ddeb" ]; then
-	    	curl -4 "${url}" -o ${version}.ddeb
+	    	axel -4 -n 16 "${url}" -o ${version}.ddeb
 	    	if [ ! -f "${version}.ddeb" ]
 	    	then
 	    		echo "WARN: ${version}.ddeb could not be downloaded"
