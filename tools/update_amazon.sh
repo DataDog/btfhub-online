@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Downloading miror list file which holds the current address of the ftp server
+# Downloading mirror list file which holds the current address of the ftp server
 wget https://amazonlinux-2-repos-us-east-2.s3.dualstack.us-east-2.amazonaws.com/2/core/latest/debuginfo/x86_64/mirror.list
 # Downloading the latest compressed packages list
 wget "$(head -1 mirror.list)/repodata/primary.sqlite.gz"

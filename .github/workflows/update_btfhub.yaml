@@ -1,0 +1,31 @@
+name: Update BTFs
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        distro: [ ubuntu, debian, centos, amazon, fedora ]
+
+    steps:
+      - name: Fetch code
+        uses: actions/checkout@v2
+
+      - name: Install packages
+        run: |
+          sudo add-apt-repository -y ppa:rafaeldtinoco/dwarves
+          sudo apt-get update
+          sudo apt-get install -y dwarves lynx sqlite3 axel
+
+      - name: GCR prod auth
+        uses: google-github-actions/auth@v0.4.0
+        with:
+          credentials_json: ${{ env.PROD_GCR_SA_KEY }}
+
+      - name: Download
+        run: |
+          ./tools/update_${{ matrix.distro }}.sh
