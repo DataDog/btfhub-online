@@ -2,6 +2,7 @@
 
 regex="kernel-debuginfo-[4-9]+\.[0-9]+\.[0-9]+\-.*x86_64.rpm"
 
+# Iterating on the supported centos versions 7 and 8.
 for centosver in centos7 centos8; do
     centos_num=${centosver/centos/}
     # Decide on the ftp url based on the centos version
@@ -20,18 +21,25 @@ for centosver in centos7 centos8; do
     gs_names=$(gsutil ls gs://btfhub/centos/${centos_num}/x86_64/ | sed "s,gs://btfhub/centos/${centos_num}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort)
 
     echo "INFO: downloading ${repository} information"
+    # Downloading the package list from the two repositories. Those packages contains the kernel debug symbols with their remote location.
     lynx -dump -listonly ${repository} | tail -n+4 > "${centosver}"
     [[ ! -f ${centosver} ]] && exiterr "no ${centosver} packages file found"
+
+    # Taking from the packages only packages that matches the regex.
     grep -E "${regex}" "${centosver}" | awk '{print $2}' > packages
     rm "${centosver}"
 
+    # Iterating over packages
     sort packages | while read -r line; do
 
+        # Crafting the URL for downloading the debug symbols and the kernel version we are handling with.
         url=${line}
         filename=$(basename "${line}")
         # shellcheck disable=SC2001
         version=$(echo "${filename}" | sed 's:kernel-debuginfo-\(.*\).rpm:\1:g')
 
+        # Checking that we didn't handle that kernel version yet.
+        # If we did, we continue to the next kernel.
         if [[ "${gs_names[*]}" =~ ${version} ]]; then
             echo "INFO: file ${version}.btf already exists"
             continue
@@ -41,12 +49,14 @@ for centosver in centos7 centos8; do
         echo FILENAME: "${filename}"
         echo VERSION: "${version}"
 
+        # Parallel downloading of the kernel.
         axel -4 -n 16 "${url}" -o ${version}.rpm
         if [ ! -f "${version}.rpm" ]; then
             echo "WARN: ${version}.rpm could not be downloaded"
             continue
         fi
 
+        # Extracting vmlinux file from rpm package
         vmlinux=.$(rpmquery -qlp "${version}.rpm" 2>&1 | grep vmlinux)
         echo "INFO: extracting vmlinux from: ${version}.rpm"
         rpm2cpio "${version}.rpm" | cpio --to-stdout -i "${vmlinux}" > "./${version}.vmlinux" || \
@@ -59,10 +69,12 @@ for centosver in centos7 centos8; do
             continue
         }
 
-        # generate BTF raw file from DWARF data
+        # Extracting the full BTF from the vmlinux file.
         echo "INFO: generating BTF file: ${version}.btf"
         pahole --btf_encode_detached "${version}.btf" "${version}.vmlinux"
+        # Compressing the BTF.
         tar cvfJ "./${version}.btf.tar.xz" "${version}.btf"
+        # Uploading it to the bucket.
         gsutil cp ./${version}.btf.tar.xz gs://btfhub/centos/${centos_num}/x86_64/${version}.btf.tar.xz
 
         rm "${version}.rpm"
