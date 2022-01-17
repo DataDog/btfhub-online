@@ -1,0 +1,34 @@
+name: build and lint
+
+on:
+  workflow_dispatch:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+  schedule:
+    - cron: '0 */8 * * 0-4'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build_test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: guyarb/deny-not-updated-branch@v1.0.0
+
+      - name: cancel redundant job
+        uses: technote-space/auto-cancel-redundant-job@v1
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.30
+
+      - name: build
+        run: |
+          make build
