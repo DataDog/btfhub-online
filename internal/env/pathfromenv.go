@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 )
 
+// GetAbsolutePathFromEnv gets an environment variable name, and tries to get a full local path from it.
+// If the environment variable does not exist, or the path does not exist locally - we return an error.
 func GetAbsolutePathFromEnv(env string) (string, error) {
 	dirEnv := os.Getenv(env)
 	if dirEnv == "" {

@@ -17,6 +17,9 @@ for ubuntuver in bionic focal; do
         ;;
     esac
 
+    # Extracting from the remote bucket the kernel versions we already handled (either successfully or failed).
+    # Thus we will look for kernel we didn't handle it, so we will reduce run time of the script.
+    # The line gets a list of all kernels in the remote bucket and extracts the kernel version from their name.
     gs_names=$(gsutil ls gs://btfhub/ubuntu/${ubuntu_number}/x86_64/ | sed "s,gs://btfhub/ubuntu/${ubuntu_number}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort)
 
     wget http://ddebs.ubuntu.com/dists/${ubuntuver}/main/binary-amd64/Packages -O ${ubuntuver}
@@ -30,6 +33,9 @@ for ubuntuver in bionic focal; do
     rm ${ubuntuver}
     rm ${ubuntuver}-updates
 
+    # Iterating over packages names. We look for all lines starting with `Package: ` in the packages file.
+    # Then we strip the beginning of `Package: ` from the line to obtain the package name only.
+    # Then we sort the packages and iterating over them.
     grep "Package:" packages | sed 's:Package\: ::g' | sort | while read -r package; do
 
         filepath=$(grep -A1 "${package}" packages | grep -v "^Package: " | sed 's:Filename\: ::g')

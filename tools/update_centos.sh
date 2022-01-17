@@ -14,6 +14,9 @@ for centosver in centos7 centos8; do
       ;;
     esac
 
+    # Extracting from the remote bucket the kernel versions we already handled (either successfully or failed).
+    # Thus we will look for kernel we didn't handle it, so we will reduce run time of the script.
+    # The line gets a list of all kernels in the remote bucket and extracts the kernel version from their name.
     gs_names=$(gsutil ls gs://btfhub/centos/${centos_num}/x86_64/ | sed "s,gs://btfhub/centos/${centos_num}/x86_64/,,g" | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort)
 
     echo "INFO: downloading ${repository} information"

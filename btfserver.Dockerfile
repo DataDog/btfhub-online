@@ -33,7 +33,7 @@ ENV PATH="/app:${PATH}"
 ENV GIN_MODE=release
 
 COPY --from=builder /code/server /app/
-COPY tools/ /app/tools
+COPY tools /app/tools
 
 ENV TOOLS_DIR=/app/tools
 

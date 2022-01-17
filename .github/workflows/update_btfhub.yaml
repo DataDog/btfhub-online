@@ -12,6 +12,16 @@ jobs:
         distro: [ ubuntu, debian, centos, amazon, fedora ]
 
     steps:
+      - name: Check permissions
+        shell: bash
+        if: ${{ github.event_name == "workflow_dispatch" }}
+        run: |
+          array=(${{secrets.ALLOWED_PROD_DEPLOY_USERS}})
+          if [[ ! " ${array[*]} " =~ " ${{ github.actor }} " ]]; then
+          echo "::error ::'${{ github.actor }}' is not allowed to run this action!"
+          exit 1
+          fi
+
       - name: Fetch code
         uses: actions/checkout@v2
 

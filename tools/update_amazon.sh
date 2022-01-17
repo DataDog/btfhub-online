@@ -1,5 +1,8 @@
 #!/bin/bash -x
 
+# Extracting from the remote bucket the kernel versions we already handled (either successfully or failed).
+# Thus we will look for kernel we didn't handle it, so we will reduce run time of the script.
+# The line gets a list of all kernels in the remote bucket and extracts the kernel version from their name.
 gs_names=$(gsutil ls gs://btfhub/amzn/2/x86_64/ | sed 's,gs://btfhub/amzn/2/x86_64/,,g' | sed 's/.btf.tar.xz//g' | sed 's/.failed//g' | sort)
 
 repository=https://amazonlinux-2-repos-us-east-2.s3.dualstack.us-east-2.amazonaws.com/2/core/latest/debuginfo/x86_64/mirror.list
@@ -13,6 +16,8 @@ rm -f mirror.list
 gzip -d primary.sqlite.gz
 rm -f primary.sqlite.gz
 
+# primary.sqlite contains a table with all packages can be downloaded. We look for packages with name that contains `kernel-debuginfo` but does not contain `common`.
+# We strip `..` from their location.
 packages=$(sqlite3 primary.sqlite "select location_href FROM packages WHERE name like 'kernel-debuginfo%' and name not like '%common%'" | sed 's#\.\./##g')
 rm -f primary.sqlite
 
@@ -33,7 +38,7 @@ for line in $packages; do
 
     axel -4 -n 16 "http://amazonlinux.us-east-1.amazonaws.com/${url}" -o ${version}.rpm
     if [ ! -f "${version}.rpm" ]; then
-        echo "WANR: ${version}.rpm could not be downloaded"
+        echo "WARN: ${version}.rpm could not be downloaded"
         continue
     fi
 
@@ -41,7 +46,7 @@ for line in $packages; do
     echo "INFO: extracting vmlinux from: ${version}.rpm"
     rpm2cpio "${version}.rpm" | cpio --to-stdout -i "${vmlinux}" > "./${version}.vmlinux" || \
     {
-        echo "WANR: could not deal with ${version}, cleaning and moving on..."
+        echo "WARN: could not deal with ${version}, cleaning and moving on..."
         rm -rf "./usr"
         rm -rf "${version}.rpm"
         rm -rf "${version}.vmlinux"
