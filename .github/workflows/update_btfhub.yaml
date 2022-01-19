@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Check permissions
         shell: bash
-        if: ${{ github.event_name != schedule }}
+        if: ${{ github.event_name != 'schedule' }}
         run: |
           array=(${{secrets.ALLOWED_PROD_DEPLOY_USERS}})
           if [[ ! " ${array[*]} " =~ " ${{ github.actor }} " ]]; then
