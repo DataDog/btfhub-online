@@ -1,8 +1,10 @@
 #!/bin/bash -xe
 
-usage() { echo "Usage: $0 <file.bpf.o> <optional filter>" 1>&2; exit 1; }
+echo $(date +%s)
 
-if [ -z "$1" ]; then
+usage() { echo "Usage: $0 <file.bpf.o> <kernel>" 1>&2; exit 1; }
+
+if [ -z "$1" ] || [ -z "$2" ]; then
     usage
 fi
 
@@ -15,19 +17,6 @@ if [ ! -x "${btfgen}" ]; then
 	exit 1
 fi
 
-function ctrlc ()
-{
-	echo "Exiting due to ctrl-c..."
-  exit 2
-}
-
-# A Workerpool implementation that runs up to 20 processes in parallel.
-function max20 {
-   while [ `jobs | wc -l` -ge 20 ]
-   do
-      sleep 1
-   done
-}
 
 function handleBTF() {
   btf=$1
@@ -63,14 +52,9 @@ if [ -n "$2" ]; then
   filter=$2
 fi
 
-btfs=$(gsutil ls -R "gs://btfhub" | grep -E ".*$filter.*\.btf\.tar\.xz")
+handleBTF "gs://btfhub/$filter"
 
-for btf in $btfs; do
-  #
-  max20; handleBTF $btf &
-done
+tar -czvf btfs.tar.gz -C custom-archive $(ls ./custom-archive)
 
-wait
-
-tar -czvf btfs.tar.gz -C custom-archive $(ls ./custom-archive/)
 rm -rf ./custom-archive ./archive
+echo $(date +%s)

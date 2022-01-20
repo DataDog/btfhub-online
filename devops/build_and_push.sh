@@ -14,7 +14,7 @@ VERSION=$1
 
 set -e
 echo "Building docker image ${IMAGE_NAME}:${VERSION}"
-$DOCKER_COMMAND -f ${ROOT_DIR}/Dockerfile -t "${IMAGE_NAME}:${VERSION}" ${ROOT_DIR}
+$DOCKER_COMMAND -f ${ROOT_DIR}/btfserver.Dockerfile -t "${IMAGE_NAME}:${VERSION}" ${ROOT_DIR}
 echo "Building docker image ${IMAGE_NAME}:${VERSION} - done"
 docker push "${IMAGE_NAME}:${VERSION}"
 
