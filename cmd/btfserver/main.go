@@ -113,10 +113,6 @@ func generateSingleBTF(context *gin.Context) {
 	generateBTFs(context, kernelName)
 }
 
-func generateBTFHub(context *gin.Context) {
-	generateBTFs(context, "")
-}
-
 func listBTFs(ginContext *gin.Context) {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -165,7 +161,6 @@ func main() {
 	engine.Use(gin.Recovery())
 	engine.POST("/generate", generateSingleBTF)
 	engine.GET("/list", listBTFs)
-	engine.POST("/generate-hub", generateBTFHub)
 
 	port := os.Getenv("PORT")
 	if port == "" {
