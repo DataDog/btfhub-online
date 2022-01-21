@@ -110,6 +110,10 @@ func generateSingleBTF(context *gin.Context) {
 		return
 	}
 
+	kernelName = strings.ReplaceAll(kernelName, "*", "")
+	if !strings.HasSuffix(kernelName, ".btf.tar.xz") {
+		kernelName += ".btf.tar.xz"
+	}
 	generateBTFs(context, kernelName)
 }
 
