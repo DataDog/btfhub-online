@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/alexflint/go-arg"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
+	"github.com/slok/go-http-metrics/middleware"
+	ginmiddleware "github.com/slok/go-http-metrics/middleware/gin"
 
 	"github.com/seek-ret/btfhub-online/internal/btfarchive"
 	"github.com/seek-ret/btfhub-online/internal/handlers"
@@ -15,9 +20,10 @@ import (
 
 // args is the arguments to the server. Each of the arguments can be supplied via environment variable or command line.
 var args struct {
-	BucketName string `arg:"-b,env:BUCKET_NAME,required"`
-	ToolsDir   string `arg:"-t,env:TOOLS_DIR,required"`
-	Port       string `arg:"-P,env:PORT" default:"8080"`
+	BucketName  string `arg:"-b,env:BUCKET_NAME,required"`
+	ToolsDir    string `arg:"-t,env:TOOLS_DIR,required"`
+	Port        string `arg:"-p,env:PORT" default:"8080"`
+	MetricsPort string `arg:"-m,env:METRICS_PORT"`
 }
 
 func main() {
@@ -35,6 +41,10 @@ func main() {
 
 	routesHandler := handlers.NewRoutesHandler(archive, toolsDir)
 
+	// Create our middleware.
+	prometheusMiddleware := middleware.New(middleware.Config{
+		Recorder: metrics.NewRecorder(metrics.Config{}),
+	})
 	engine := gin.New()
 
 	engine.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
@@ -51,6 +61,7 @@ func main() {
 		)
 	}))
 	engine.Use(gin.Recovery())
+	engine.Use(ginmiddleware.Handler("", prometheusMiddleware))
 
 	apiRouterGroup := engine.Group("/api")
 	v1RouterGroup := apiRouterGroup.Group("/v1")
@@ -61,6 +72,17 @@ func main() {
 	// Legacy of the beta release
 	engine.POST("/generate", routesHandler.CustomizeBTFLegacy)
 	engine.GET("/list", routesHandler.ListBTFsLegacy)
+
+	// Serve our metrics.
+	if args.MetricsPort != "" {
+		go func() {
+			metricsAddress := fmt.Sprintf("0.0.0.0:%s", args.MetricsPort)
+			log.Printf("Metrics listening at %s", metricsAddress)
+			if err := http.ListenAndServe(metricsAddress, promhttp.Handler()); err != nil {
+				log.Panicf("Error while serving metrics: %s", err)
+			}
+		}()
+	}
 
 	fmt.Printf("listening on 0.0.0.0:%s\n", args.Port)
 	if err := engine.Run(fmt.Sprintf("0.0.0.0:%s", args.Port)); err != nil {
