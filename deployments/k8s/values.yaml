@@ -1,0 +1,28 @@
+# Default values for BTFHub online.
+
+name: btfhub-online
+image: us.gcr.io/seekret/btfhub:2.0.0
+
+resources:
+  requests:
+    memory: 200Mi
+    cpu: 400m
+  limits:
+    memory: 400Mi
+    cpu: 600m
+
+horizontal_scaling:
+  min_pods: 1
+  max_pods: 10
+  cpu_utilization: 50
+
+arguments:
+  bucket_name:
+  tools_directory: /app/tools
+  port: 8080
+  metrics_port: 8081
+
+  gcp_bucket:
+    enabled: true
+    service_account_name: gcp-bucket-service-account
+    service_account_content:

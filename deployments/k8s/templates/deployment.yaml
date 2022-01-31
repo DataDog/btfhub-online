@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      {{- if not (empty .Values.arguments.metrics_port) }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: {{ .Values.arguments.metrics_port | quote }}
+      {{- end }}
+      labels:
+        app: {{ .Values.name }}
+        date: "{{ now | unixEpoch }}"
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: {{ .Values.image }}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          env:
+            - name: BUCKET_NAME
+              value: {{ required "A bucket name is required!" .Values.arguments.bucket_name | quote }}
+            - name: TOOLS_DIR
+              value: {{ .Values.arguments.tools_directory | quote }}
+            - name: PORT
+              value: {{ .Values.arguments.port | quote }}
+            {{- if not (empty .Values.arguments.metrics_port) }}
+            - name: METRICS_PORT
+              value: {{ .Values.arguments.metrics_port | quote }}
+            {{- end }}
+            {{- if .Values.arguments.gcp_bucket.enabled }}
+            - name: "GOOGLE_APPLICATION_CREDENTIALS"
+              value: "/var/run/secret/cloud.google.com/service-account.json"
+            {{- end }}
+          {{- if .Values.arguments.gcp_bucket.enabled }}
+          volumeMounts:
+            - mountPath: /var/run/secret/cloud.google.com
+              name: {{ .Values.arguments.gcp_bucket.service_account_name }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.arguments.port }}
+            {{- if not (empty .Values.arguments.metrics_port) }}
+            - containerPort: {{ .Values.arguments.metrics_port }}
+            {{- end }}
+          {{- if not (empty .Values.arguments.metrics_port) }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.arguments.metrics_port }}
+            initialDelaySeconds: 3
+            failureThreshold: 40
+            periodSeconds: 3
+          {{- end }}
+      {{- if .Values.arguments.gcp_bucket.enabled }}
+      volumes:
+        - name: {{ .Values.arguments.gcp_bucket.service_account_name }}
+          secret:
+            secretName: {{ .Values.arguments.gcp_bucket.service_account_name }}
+      {{- end }}

@@ -1,0 +1,14 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  annotations:
+    date: "{{ now | unixEpoch }}"
+  name: {{ .Values.name }}
+spec:
+  maxReplicas: {{ .Values.horizontal_scaling.max_pods }}
+  minReplicas: {{ .Values.horizontal_scaling.min_pods }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.name }}
+  targetCPUUtilizationPercentage: {{ .Values.horizontal_scaling.cpu_utilization }}
