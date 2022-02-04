@@ -8,12 +8,10 @@ spec:
       app: {{ .Values.name }}
   template:
     metadata:
-      {{- if not (empty .Values.arguments.metrics_port) }}
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/path: /metrics
-        prometheus.io/port: {{ .Values.arguments.metrics_port | quote }}
-      {{- end }}
+        prometheus.io/path: /monitoring/metrics
+        prometheus.io/port: {{ .Values.arguments.port | quote }}
       labels:
         app: {{ .Values.name }}
         date: "{{ now | unixEpoch }}"
@@ -36,14 +34,16 @@ spec:
               value: {{ .Values.arguments.tools_directory | quote }}
             - name: PORT
               value: {{ .Values.arguments.port | quote }}
-            {{- if not (empty .Values.arguments.metrics_port) }}
-            - name: METRICS_PORT
-              value: {{ .Values.arguments.metrics_port | quote }}
-            {{- end }}
             {{- if .Values.arguments.gcp_bucket.enabled }}
             - name: "GOOGLE_APPLICATION_CREDENTIALS"
               value: "/var/run/secret/cloud.google.com/service-account.json"
             {{- end }}
+            {{- if .Values.prometheus_push_gateway.enabled }}
+            - name: PUSH_GATEWAY
+              value: {{ .Values.prometheus_push_gateway.name | quote }}
+            {{- end }}
+            - name: NO_MONITORING
+              value: {{ .Values.arguments.disable_metrics_handler | quote }}
           {{- if .Values.arguments.gcp_bucket.enabled }}
           volumeMounts:
             - mountPath: /var/run/secret/cloud.google.com
@@ -51,18 +51,13 @@ spec:
           {{- end }}
           ports:
             - containerPort: {{ .Values.arguments.port }}
-            {{- if not (empty .Values.arguments.metrics_port) }}
-            - containerPort: {{ .Values.arguments.metrics_port }}
-            {{- end }}
-          {{- if not (empty .Values.arguments.metrics_port) }}
           livenessProbe:
             httpGet:
-              path: /healthz
-              port: {{ .Values.arguments.metrics_port }}
+              path: /monitoring/health
+              port: {{ .Values.arguments.port }}
             initialDelaySeconds: 3
             failureThreshold: 40
             periodSeconds: 3
-          {{- end }}
       {{- if .Values.arguments.gcp_bucket.enabled }}
       volumes:
         - name: {{ .Values.arguments.gcp_bucket.service_account_name }}
