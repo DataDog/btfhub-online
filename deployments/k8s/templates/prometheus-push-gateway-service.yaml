@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: {{ .Values.prometheus_push_gateway.name }}
 spec:
+  type: LoadBalancer
+  {{- if not (empty .Values.prometheus_push_gateway.ip) }}
+  loadBalancerIP: {{ .Values.prometheus_push_gateway.ip }}
+  {{- end }}
   ports:
     - name: http
       port: {{ .Values.prometheus_push_gateway.port }}
