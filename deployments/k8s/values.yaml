@@ -3,6 +3,12 @@
 name: btfhub-online
 image: us.gcr.io/seekret/btfhub:2.0.0
 
+prometheus_push_gateway:
+  port: 80
+  image: prom/pushgateway
+  enabled: false
+  name: prometheus-push-gateway
+
 ingress:
   enabled: true
   name: "{{ .Values.name }}-ingress"
@@ -31,7 +37,7 @@ arguments:
   bucket_name:
   tools_directory: /app/tools
   port: 80
-  metrics_port: 8081
+  disable_metrics_handler: false
 
   gcp_bucket:
     enabled: true
