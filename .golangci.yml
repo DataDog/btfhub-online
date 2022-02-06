@@ -1,5 +1,5 @@
 service:
-  golangci-lint-version: 1.30.0 # Keep this in sync with seekretci dockerfile
+  golangci-lint-version: 1.30.0
 
 # options for analysis running
 run:

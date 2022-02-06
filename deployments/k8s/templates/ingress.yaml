@@ -9,11 +9,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - {{ .Values.ingress.domain | quote }}
+        - {{ required "ingress.domain is required" .Values.ingress.domain | quote }}
       secretName: {{ tpl .Values.ingress.secret_name . }}
   ingressClassName: kong
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: {{ required "ingress.host is required" .Values.ingress.host }}
       http:
         paths:
           - path: /
