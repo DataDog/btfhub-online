@@ -3,13 +3,6 @@
 name: btfhub-online
 image: us.gcr.io/seekret/btfhub:2.0.0
 
-prometheus_push_gateway:
-  port: 80
-  image: prom/pushgateway
-  enabled: false
-  name: prometheus-push-gateway
-  ip:
-
 ingress:
   enabled: true
   name: "{{ .Values.name }}-ingress"

@@ -38,10 +38,6 @@ spec:
             - name: "GOOGLE_APPLICATION_CREDENTIALS"
               value: "/var/run/secret/cloud.google.com/service-account.json"
             {{- end }}
-            {{- if .Values.prometheus_push_gateway.enabled }}
-            - name: PUSH_GATEWAY
-              value: {{ .Values.prometheus_push_gateway.name | quote }}
-            {{- end }}
             - name: NO_MONITORING
               value: {{ .Values.arguments.disable_metrics_handler | quote }}
           {{- if .Values.arguments.gcp_bucket.enabled }}
