@@ -3,6 +3,17 @@
 name: btfhub-online
 image: us.gcr.io/seekret/btfhub:2.0.0
 
+ingress:
+  enabled: true
+  name: "{{ .Values.name }}-ingress"
+  secret_name: "{{ .Values.name }}-tls"
+  static_ip_name: "{{ .Values.name }}-ip"
+  host: btfhub.seekret.io
+  domain: '*.seekret.io'
+  tls:
+    cert:
+    key:
+
 resources:
   requests:
     memory: 200Mi
@@ -19,7 +30,7 @@ horizontal_scaling:
 arguments:
   bucket_name:
   tools_directory: /app/tools
-  port: 8080
+  port: 80
   metrics_port: 8081
 
   gcp_bucket:
