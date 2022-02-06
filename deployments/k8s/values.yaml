@@ -7,7 +7,7 @@ prometheus_push_gateway:
   port: 80
   image: prom/pushgateway
   enabled: false
-  name: prometheus-push-gaetway
+  name: prometheus-push-gateway
 
 ingress:
   enabled: true
