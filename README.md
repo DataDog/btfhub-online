@@ -4,6 +4,37 @@ The purpose of the online version is to make it easier for developers to fetch t
 
 The project will allow you to be "forward compatible" with new minor versions or patches of your kernel being released.
 
+# The problem
+In the recent years eBPF became more and more common among developers and companies. Most of them have used BCC toolkit
+it was the common toolkit for eBPF. But BCC have major drawback, among them, we can find portability issue.
+
+To overcome that issue (and some other issues) there is a movement to libbpf toolkit with the great addition of CORE
+(Compile Once Run Everywhere). To use libbpf+CORE, one must supply a file called BTF (BPF Type Format) which holds data
+that can tell how to make a BPF code compatible in the current host's kernel (Where to find structs in the kernel, how 
+they are arranged, etc.). Latest kernel versions do have a default BTF file at `/sys/kernel/btf/vmlinux`, but older kernels
+does not have such file. The solution for them is to generate such BTF files to all versions of the old kernel.
+Gladly, [BTFHub](https://github.com/aquasecurity/btfhub) have done most of the hard work and generated BTFs for old kernels
+and their updates. BTFHub even added a script to generate a minimized and customized BTFs for a given BPF (a BTF that contain
+only relevant data to your BPF). So you can create a directory with thousands of BTFs with a few MBs.
+
+But, unfortunately kernel can be updated, and your local directory of the BTFs might be outdated for the latest kernel update.
+Here BTFHub-Online comes in!
+
+BTFHub Online supplies an online server that is able to supply a BTF (customized or not) live!
+You BPF program just need to send a request to the server, and it will immediately get the relevant BTF.
+Using the online version you gain:
+* "Forward compatability" to new kernel patches
+* No need to generate the local directory of BTFs
+* Easy integration
+
+
+# Access
+The server is open for free access at https://btfhub.seekret.io (checkout the [SDK list](#list-of-sdks) for easy integration)
+
+Of course, you can set up and host your server by your own (checkout the [deployment section](#deploy))
+Currently we wrap deployment for:
+* k8s
+
 # Table of Content
 1. [Visual Diagram](#visual-diagram)
 2. [Mode or operation](#mode-of-operation)
