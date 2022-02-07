@@ -13,7 +13,7 @@ spec:
       secretName: {{ tpl .Values.ingress.secret_name . }}
   ingressClassName: kong
   rules:
-    - host: {{ required "ingress.host is required" .Values.ingress.host }}
+    - host: {{ required "ingress.host is required" .Values.ingress.host | quote }}
       http:
         paths:
           - path: /
