@@ -1,0 +1,162 @@
+openapi: 3.0.1
+info:
+  title: BTFHub Online OpenAPI3
+  description: This is the specifications for BTFHub-online APIs.
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: guya@seekret.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://btfhub.seekret.io/
+- url: http://btfhub.seekret.io/
+tags:
+- name: APIs
+paths:
+  /api/v1/list:
+    get:
+      tags:
+      - APIs
+      summary: Returns all BTFs available in the server
+      description: Returns a list of structs that identifies all BTFs in the archive
+        configured for the server.
+      operationId: /api/v1/list_GET
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BTFRecordIdentifier'
+  /api/v1/download:
+    get:
+      tags:
+      - APIs
+      summary: Download a single BTF from the server
+      description: Downloads a single BTF (compressed as tar.xz file) from the acrhive
+        configured for the server.
+      operationId: /api/v1/download_GET
+      parameters:
+      - $ref: '#/components/parameters/distribution'
+      - $ref: '#/components/parameters/distribution_version'
+      - $ref: '#/components/parameters/arch'
+      - $ref: '#/components/parameters/kernel_version'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/v1/customize:
+    post:
+      tags:
+      - APIs
+      summary: Generates a customize BTF for a given BPF
+      description: Receives a BPF binary, and a BTF identifier and returns the custom,
+        minimized BTF for the given BPF.
+      operationId: /api/v1/customize_POST
+      parameters:
+      - $ref: '#/components/parameters/distribution'
+      - $ref: '#/components/parameters/distribution_version'
+      - $ref: '#/components/parameters/arch'
+      - $ref: '#/components/parameters/kernel_version'
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+              - bpf
+              properties:
+                bpf:
+                  type: string
+                  description: The content of your BPF
+                  format: binary
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+components:
+  parameters:
+    distribution:
+      in: query
+      name: "distribution"
+      schema:
+        enum:
+        - "ubuntu"
+        - "debian"
+        - "amzn"
+        - "centos"
+        - "fedora"
+        type: "string"
+      description: "The distribution name of the host machine"
+      required: true
+    distribution_version:
+      in: query
+      name: "distribution_version"
+      description: "The distribution version of the host machine"
+      schema:
+        example: "20.04 or 18.04 for ubuntu. 7 o 8 for centos. 2 for amzn. 29 to 34 for fedora. 9, 10 or 11 for debian"
+        type: "string"
+      required: true
+    kernel_version:
+      in: query
+      name: "kernel_version"
+      description: "The kernel version the host machine"
+      required: true
+      schema:
+        type: "string"
+        example: "5.11.0-1022-gcp"
+    arch:
+      in: query
+      name: "arch"
+      required: true
+      description: "The CPU architecture of the host machine"
+      schema:
+        enum:
+        - "x86_64"
+        - "arm64"
+        type: "string"
+  schemas:
+    BTFRecordIdentifier:
+      required:
+      - arch
+      - distribution
+      - distribution_version
+      - kernel_version
+      type: object
+      properties:
+        distribution:
+          type: string
+          description: The distribution name of the host machine
+          enum:
+          - ubuntu
+          - debian
+          - amzn
+          - centos
+          - fedora
+        distribution_version:
+          type: string
+          description: The distribution version of the host machine
+          example: 20.04 or 18.04 for ubuntu. 7 o 8 for centos. 2 for amzn. 29 to
+            34 for fedora. 9, 10 or 11 for debian
+        kernel_version:
+          type: string
+          description: The kernel version the host machine
+          example: 5.11.0-1022-gcp
+        arch:
+          type: string
+          description: The CPU architecture of the host machine
+          enum:
+          - x86_64
+          - arm64
