@@ -8,8 +8,8 @@ ingress:
   name: "{{ .Values.name }}-ingress"
   secret_name: "{{ .Values.name }}-tls"
   static_ip_name: "{{ .Values.name }}-ip"
-  host: btfhub.seekret.io
-  domain: '*.seekret.io'
+  host:
+  domain:
   tls:
     cert:
     key:
