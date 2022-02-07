@@ -67,24 +67,24 @@ func extractBPFToFile(ginContext *gin.Context, dir string) (string, error) {
 	// Read the BPF binary from the HTTP payload.
 	bpfReader, err := ginContext.FormFile("bpf")
 	if err != nil {
-		return "", eris.Wrap(err, "failed reading BTF from request")
+		return "", eris.Wrap(err, "failed reading BPF from request")
 	}
 
 	filePath := path.Join(dir, "bpf.core.o")
 	bpfHandle, err := os.Create(filePath)
 	if err != nil {
-		return "", eris.Wrap(err, "failed creating temporary file for the BTF")
+		return "", eris.Wrap(err, "failed creating temporary file for the BPF")
 	}
 	// no need to remove the file as the directory will be deleted.
 
 	reader, err := bpfReader.Open()
 	if err != nil {
-		return "", eris.Wrap(err, "failed reading BTF")
+		return "", eris.Wrap(err, "failed reading BPF")
 	}
 
 	// Write the BPF binary to the temporary file.
 	if _, err := io.Copy(bpfHandle, reader); err != nil {
-		return "", eris.Wrap(err, "failed copying BTF to temporary file")
+		return "", eris.Wrap(err, "failed copying BPF to temporary file")
 	}
 
 	return bpfHandle.Name(), nil
@@ -171,7 +171,7 @@ func (routesHandler RoutesHandler) CustomizeBTF(ginContext *gin.Context) {
 		return
 	}
 
-	compressedOutput, err := compression.CompressTarGZ(outputDir)
+	compressedOutput, err := compression.CompressTarXZ(outputDir)
 	if err != nil {
 		log.Printf("Failed compressing results: %+v", err)
 		ginContext.AbortWithStatus(http.StatusInternalServerError)

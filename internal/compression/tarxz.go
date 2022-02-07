@@ -2,13 +2,18 @@ package compression
 
 import (
 	"archive/tar"
+	"bytes"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rotisserie/eris"
 	"github.com/ulikunitz/xz"
 )
+
+// General explanation about tar.xz https://linuxize.com/post/how-to-extract-unzip-tar-xz-file/
 
 // extractFileHelper is a helper function that copies a single file from the tar reader into a real location on disk.
 func extractFileHelper(target string, fileMode int64, tarReader io.Reader) error {
@@ -70,4 +75,64 @@ func DecompressTarXZ(dstDir string, inputReader io.Reader) error {
 			}
 		}
 	}
+}
+
+// CompressTarXZ compresses a given input dir into a tar.xz.
+func CompressTarXZ(inputDir string) (*bytes.Buffer, error) {
+	outputBuffer := &bytes.Buffer{}
+	xzWriter, err := xz.NewWriter(outputBuffer)
+	if err != nil {
+		return nil, err
+	}
+	tarWriter := tar.NewWriter(xzWriter)
+
+	// iterate all files in the target directory
+	err = filepath.WalkDir(inputDir, func(file string, dirEntry fs.DirEntry, _ error) error {
+		fileInfo, err := dirEntry.Info()
+		if err != nil {
+			return err
+		}
+		// generate tar header
+		header, err := tar.FileInfoHeader(fileInfo, file)
+		if err != nil {
+			return err
+		}
+
+		// Must provide real name. Removing the directory from the full path.
+		// (see https://golang.org/src/archive/tar/common.go?#L626)
+		header.Name = filepath.ToSlash(strings.TrimPrefix(file, inputDir))
+
+		// write header
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return err
+		}
+		// if not a dir, write the file content
+		if !fileInfo.IsDir() {
+			data, err := os.Open(file)
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(tarWriter, data); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		_ = tarWriter.Close()
+		_ = xzWriter.Close()
+		return nil, eris.Wrap(err, "failed compressing input directory")
+	}
+
+	// produce tar
+	if err := tarWriter.Close(); err != nil {
+		return nil, eris.Wrap(err, "failed finalizing tar")
+	}
+	// produce gzip
+	if err := xzWriter.Close(); err != nil {
+		return nil, eris.Wrap(err, "failed finalizing xz")
+	}
+
+	return outputBuffer, nil
 }

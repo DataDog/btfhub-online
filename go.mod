@@ -10,7 +10,6 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
-	github.com/klauspost/pgzip v1.2.5
 	github.com/prometheus/client_golang v1.12.0
 	github.com/rotisserie/eris v0.5.1
 	github.com/slok/go-http-metrics v0.10.0
