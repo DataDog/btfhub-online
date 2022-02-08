@@ -75,10 +75,6 @@ func addRoutes(engine *gin.Engine, routesHandler handlers.RoutesHandler) {
 	v1RouterGroup.GET("/download", routesHandler.DownloadBTF)
 	v1RouterGroup.GET("/list", routesHandler.ListBTFs)
 
-	// Legacy of the beta release
-	engine.POST("/generate", routesHandler.CustomizeBTFLegacy)
-	engine.GET("/list", routesHandler.ListBTFsLegacy)
-
 	monitoringRouterGroup := engine.Group("/monitoring")
 	if !args.DisableMonitoring {
 		monitoringRouterGroup.GET("/metrics", gin.WrapH(promhttp.Handler()))

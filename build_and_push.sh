@@ -1,7 +1,6 @@
 #!/bin/bash
 
-CURRENT_DIR=$(dirname $(realpath "$0"))
-ROOT_DIR=$(dirname "$CURRENT_DIR")
+ROOT_DIR=$(dirname $(realpath "$0"))
 DOCKER_COMMAND=${DOCKER_COMMAND:-"docker build"}
 
 if [[ -z $1 ]]; then
