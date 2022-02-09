@@ -11,7 +11,6 @@ info:
   version: 1.0.0
 servers:
 - url: https://btfhub.seekret.io/
-- url: http://btfhub.seekret.io/
 tags:
 - name: APIs
 paths:
@@ -20,7 +19,7 @@ paths:
       tags:
       - APIs
       summary: Returns all BTFs available in the server
-      description: Returns a list of structs that identifies all BTFs in the archive
+      description: Returns list of BTF Records available in the BTF Hub
         configured for the server.
       operationId: /api/v1/list_GET
       responses:
@@ -112,7 +111,7 @@ components:
     kernel_version:
       in: query
       name: "kernel_version"
-      description: "The kernel version the host machine"
+      description: "The kernel version of the host machine"
       required: true
       schema:
         type: "string"
@@ -152,7 +151,7 @@ components:
             34 for fedora. 9, 10 or 11 for debian
         kernel_version:
           type: string
-          description: The kernel version the host machine
+          description: The kernel version of the host machine
           example: 5.11.0-1022-gcp
         arch:
           type: string
