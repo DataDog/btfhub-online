@@ -11,6 +11,23 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ .Values.name }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
   metrics:
     - type: Resource
       resource:
@@ -24,14 +41,3 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-    - type: Object
-      object:
-        metric:
-          name: requests-per-second
-        describedObject:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          name: main-route
-        target:
-          type: Value
-          value: 0.1k
