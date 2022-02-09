@@ -93,7 +93,7 @@ curl "https://btfhub.seekret.io/monitoring/health"
 # Docker build
 
 ```bash
-docker -f btfserver.Dockerfile -t "<image>" .
+docker build -f btfserver.Dockerfile -t "<image>" .
 ```
 
 # Deploy
