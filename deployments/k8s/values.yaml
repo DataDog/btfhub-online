@@ -16,11 +16,11 @@ ingress:
 
 resources:
   requests:
-    memory: 200Mi
-    cpu: 400m
+    memory: 1000Mi
+    cpu: 1000m
   limits:
-    memory: 400Mi
-    cpu: 600m
+    memory: 1500Mi
+    cpu: 1500m
 
 horizontal_scaling:
   min_pods: 1
