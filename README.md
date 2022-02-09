@@ -56,6 +56,7 @@ your eBPF module.
 
 ## List of SDKs
 1. [GO](https://github.com/seek-ret/btfhub-online-go)
+2. [OpenAPI 3 spec](./docs/openapi.yaml)
 
 ## Examples
 ### Run server locally
