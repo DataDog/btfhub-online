@@ -1,4 +1,4 @@
-apiVersion: autoscaling/v1
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   annotations:
@@ -11,4 +11,27 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ .Values.name }}
-  targetCPUUtilizationPercentage: {{ .Values.horizontal_scaling.cpu_utilization }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 50
+    - type: Object
+      object:
+        metric:
+          name: requests-per-second
+        describedObject:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          name: main-route
+        target:
+          type: Value
+          value: 0.1k
