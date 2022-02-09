@@ -57,8 +57,8 @@ func (archive GCSBucketArchive) List(ctx context.Context) ([]datatypes.BTFRecord
 			res = append(res, datatypes.BTFRecordIdentifier{
 				Distribution:        components[0],
 				DistributionVersion: components[1],
-				KernelVersion:       components[2],
-				Arch:                components[3],
+				Arch:                components[2],
+				KernelVersion:       components[3],
 			})
 		}
 	}
