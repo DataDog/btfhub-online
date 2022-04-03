@@ -26,6 +26,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
+        env:
+          INPUT_GO-VERSION: 1.17
         with:
           version: v1.30
 
