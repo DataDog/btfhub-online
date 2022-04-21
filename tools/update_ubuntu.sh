@@ -3,9 +3,17 @@
 repository="http://ddebs.ubuntu.com"
 
 # Iterating on the supported ubuntu versions bionic (18.04) and focal (20.04).
-for ubuntuver in bionic focal; do
+for ubuntuver in trusty xenial bionic focal; do
     # Creating a regex for the kernels depending on the ubuntu version.
     case "${ubuntuver}" in
+    "trusty")
+        regex="(linux-image-unsigned-(4.15.0|4.4.0)-.*-(generic|azure)-dbgsym)"
+        ubuntu_number=14.04
+        ;;
+    "xenial")
+        regex="(linux-image-unsigned-(4.15.0|4.4.0)-.*-(generic|azure|gcp)-dbgsym|linux-image-4.15.0-.*-aws-dbgsym)"
+        ubuntu_number=16.04
+        ;;
     "bionic")
         regex="(linux-image-unsigned-(4.15.0|5.4.0)-.*-(generic|azure|gcp|gke)-dbgsym|linux-image-(4.15.0|5.4.0)-.*-aws-dbgsym)"
         ubuntu_number=18.04
